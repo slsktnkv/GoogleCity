@@ -12,6 +12,7 @@ void City::LoadCity(std::istream& in) {
         in >> b >> e >> name >> l;
         jams[i].street = streets[{b, e}] = &(street_names[name] = {b, e, l, &jams[i], name});
         jams[i].lenght = l;
+        jams[i].cars.init(V);
     }
     for (int i = 0; i < V; ++i) {
         int p;
@@ -70,7 +71,7 @@ void City::Reset() {
     for (auto& c : cars) {
         c.remainder = 0;
         c.i_jam = 0;
-        c.path.front()->cars.push_back(&c);
+        c.path.front()->cars.push(&c);
     }
 }
 
@@ -85,13 +86,13 @@ void City::NextTurn() {
                 cur_jam->IsGreen(T)) {
                 // move car from this jam
                 cur_jam->last_update = T;
-                cur_jam->cars.pop_front();
+                cur_jam->cars.pop();
                 ++c.i_jam;
                 if (c.i_jam + 1 < c.path.size()) {
                     // put car to next jam
                     Jam* next = c.path[c.i_jam];
                     c.remainder = next->lenght;
-                    next->cars.push_back(&c);
+                    next->cars.push(&c);
                 } else {
                     // finish
                     if (c.path.back()->lenght <= D - T) {
@@ -117,4 +118,25 @@ bool City::CheckCars() {
 
 bool Jam::IsGreen(int t) {
     return (t + green_shift) % all_time < green_time;
+}
+
+void Jam::UnsafeCarQueue::init(size_t size) {
+    queue.resize(size);
+    head = tail = 0;
+}
+
+void Jam::UnsafeCarQueue::push(Car* car) {
+    queue[tail++] = car;
+}
+
+void Jam::UnsafeCarQueue::pop() {
+    ++head;
+}
+
+void Jam::UnsafeCarQueue::clear() {
+    head = tail = 0;
+}
+
+Car* Jam::UnsafeCarQueue::front() const {
+    return queue[head];
 }

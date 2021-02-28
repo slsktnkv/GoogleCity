@@ -4,7 +4,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <deque>
 
 using Intersection = int;
 struct Jam;
@@ -25,11 +24,24 @@ struct Car {
 };
 
 struct Jam {
+    class UnsafeCarQueue
+    {
+    private:
+        std::vector<Car*> queue;
+        size_t head;
+        size_t tail;
+    public:
+        inline void init(size_t);
+        inline void push(Car*);
+        inline void pop();
+        inline void clear();
+        inline Car* front() const;
+    };
     int lenght;
     int green_shift = 0, green_time = 0, all_time = 1;
     int last_update = -1;
     Street* street = nullptr;
-    std::deque<Car*> cars;
+    UnsafeCarQueue cars;
     inline bool IsGreen(int);
 };
 
