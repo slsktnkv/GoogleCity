@@ -16,6 +16,7 @@ struct Street{
 
 struct Car{
     queue<Street> path;
+    int current_intersect;
     bool blocked;
 };
 
@@ -38,16 +39,11 @@ struct Semaphore{
 struct Schedule{
     vector<Semaphore> semaphores;
     int len;
+    int score;
 };
 
-bool exist(vector<int> v, int a){
-    for(int i = 0; i < v.size(); ++i)
-        if(v[i] == a)
-            return true;
-    return false;
-}
 
-int get_semaphore_position(Semaphore s, int time){
+int get_semaphore_position(Semaphore &s, int time){
     time = time % s.cycle;
     int pos = 0;
     while(time >= s.lights[pos].time){
@@ -67,10 +63,10 @@ Schedule get_schedule(vector<Intersect>& Intersects, int time){
             light.time = time;
             l.push_back(light);
         }
-        Semaphore s = {l, 0, 0, int(time * Intersects[i].in.size()), i};
+        Semaphore s = {l, 0, 0, time * (int)Intersects[i].in.size(), i};
         sch.push_back(s);
     }
-    Schedule schedule = {sch, int(sch.size())};
+    Schedule schedule = {sch, (int)sch.size(), 0};
     return schedule;
 }
 
@@ -84,25 +80,23 @@ void show_schedule(Schedule s){
     }
 }
 
-int simulate(int duration, vector<Intersect> Intersects, map<string, Street> street_table, vector<Car> cars, Schedule schedule, int bonus){
+int simulate(int duration, vector<Intersect>&Intersects, map<string, Street> street_table, vector<Car> cars, Schedule &schedule, int bonus){
     // расставить машины на стартовые позиции
+    if (schedule.score) return schedule.score;
     int total_score = 0;
-    vector<int> active_semaphores;
     for(int i = 0; i < cars.size(); ++i){
         cars[i].path.front().length = 0;
         street_table[cars[i].path.front().name].cars.push(i);
-        active_semaphores.push_back(street_table[cars[i].path.front().name].dist);
+        cars[i].current_intersect = street_table[cars[i].path.front().name].dist;
     }
     for(int t = 0; t < duration; ++t){
-        vector<int> next;
         for(int i = 0; i < cars.size(); ++i){
             if(!cars[i].blocked){
                 if(cars[i].path.front().length){
                     cars[i].path.front().length --;
                     if(!cars[i].path.front().length){
                         street_table[cars[i].path.front().name].cars.push(i);
-                        if(! exist(next, street_table[cars[i].path.front().name].dist))
-                            next.push_back(street_table[cars[i].path.front().name].dist);
+                        cars[i].current_intersect = cars[i].path.front().dist;
                     }
                 }
             }
@@ -111,28 +105,26 @@ int simulate(int duration, vector<Intersect> Intersects, map<string, Street> str
         // сложность O(duration * intersections) <= 10 ^ 9
         // Можем оптимизировать до O(duration * cars) <= 10 ^ 7
         // если итерироваться не по всем сфетофорам, а только по тем, где стоят машины
-        for(int iter = 0; iter < active_semaphores.size(); ++iter){
-            int i = active_semaphores[iter];
-            int pos = get_semaphore_position(schedule.semaphores[i], t);
-            string green_street = schedule.semaphores[i].lights[pos].name;
-            if(!exist(next, i))
-                next.push_back(i);
-            if(!street_table[green_street].cars.empty()){
-                int car_number = street_table[green_street].cars.front();
-                street_table[green_street].cars.pop();
-                if(street_table[green_street].cars.empty() && exist(next, i)){
-                    //cout << "erase " << next.back()<<endl;
-                    next.pop_back();
-                }
-                cars[car_number].path.pop();
-                if(cars[car_number].path.size() == 1){
-                    cars[car_number].blocked = true;
-                    if(cars[car_number].path.front().length + t <= duration)
-                        total_score += bonus +(duration - (cars[car_number].path.front().length + t));
+        map<int, int> used;
+        for(int iter = 0; iter < cars.size(); ++iter){
+            int i = cars[iter].current_intersect;
+            if(i >= 0 && !(used.count(i))){
+                int pos = get_semaphore_position(schedule.semaphores[i], t);
+                string green_street = schedule.semaphores[i].lights[pos].name;
+                if(!street_table[green_street].cars.empty()){
+                    int car_number = street_table[green_street].cars.front();
+                    street_table[green_street].cars.pop();
+                    cars[car_number].path.pop();
+                    cars[car_number].current_intersect = -1;
+                    if(cars[car_number].path.size() == 1){
+                        cars[car_number].blocked = true;
+                        if(cars[car_number].path.front().length + t <= duration)
+                            total_score += bonus +(duration - (cars[car_number].path.front().length + t));
+                    }
                 }
             }
+            used[i] = 1;
         }
-        active_semaphores = next;
     }
     return total_score;
 }
@@ -156,7 +148,7 @@ Schedule read_schedule(vector<Intersect>& Intersects, string schedule_file){
         Semaphore s = {l, 0, 0, cycle , intersect};
         sch.push_back(s);
     }
-    Schedule schedule = {sch, int(sch.size())};
+    Schedule schedule = {sch, (int)sch.size(), 0};
     fin.close();
     return schedule;
 }
@@ -170,16 +162,72 @@ Schedule mutate(Schedule s, int k){
             if(s.semaphores[i].lights[j].time < 0)
                 s.semaphores[i].lights[j].time = 0;
             new_cycle += s.semaphores[i].lights[j].time;
+            if(!new_cycle && j == s.semaphores[i].lights.size() - 1){
+                new_cycle = 1;
+                s.semaphores[i].lights[j].time = 1;
+            }
         }
         s.semaphores[i].cycle = new_cycle;
     }
+    s.score = 0;
     return s;
+}
+
+
+vector<Schedule> get_genetic_winners(vector<Schedule> population, int duration, vector<Intersect>&Intersects, map<string, Street> street_table, vector<Car> cars, int bonus, int part){
+    vector<Schedule> winners;
+    vector<pair<int, int>> scores;
+    for(int i = 0; i < population.size(); ++i){
+        int score = simulate(duration, Intersects, street_table, cars, population[i], bonus);
+        cout << score<<" ";
+        pair<int, int> temp = make_pair(i, score);
+        scores.push_back(temp);
+    }
+    cout << endl;
+    for(int i = 0; i < population.size(); ++i)
+        for(int j = 0; j < population.size() - i - 1; ++j)
+            if(scores[j].second < scores[j + 1].second)
+                swap(scores[j], scores[j + 1]);
+    for(int i = 0; i < population.size() * part / 100; i ++){
+        winners.push_back(population[scores[i].first]);
+        winners.push_back(mutate(population[scores[i].first], 1));
+        winners.push_back(mutate(population[scores[i].first], 2));
+        cout << scores[i].second<< endl;
+    }
+    winners.push_back(mutate(population[scores[population.size() - 3].first], 1));
+    return winners;
+}
+
+void genetic_algo(vector<Schedule>&population, int duration, vector<Intersect>&Intersects, map<string, Street> street_table, vector<Car>&cars, int bonus, int part){
+    vector<Schedule> winners;
+    vector<pair<int, int>> scores;
+    for(int i = 0; i < population.size(); ++i){
+        int score = simulate(duration, Intersects, street_table, cars, population[i], bonus);
+        cout << score<<" ";
+        pair<int, int> temp = make_pair(i, score);
+        scores.push_back(temp);
+    }
+    cout << endl;
+    vector<int>dead;
+    for(int i = 0; i < population.size(); ++i)
+        for(int j = 0; j < population.size() - i - 1; ++j)
+            if(scores[j].second < scores[j + 1].second)
+                swap(scores[j], scores[j + 1]);
+    for(int i = population.size() * part / 100; i < population.size(); ++i)
+        dead.push_back(scores[i].first);
+    for(int i = 0; i < population.size() * part / 100; i ++){
+        population[dead.back()] = mutate(population[i], 1);
+        dead.pop_back();
+        population[dead.back()] = mutate(population[i], 2);
+        dead.pop_back();
+        cout << scores[i].second<< endl;
+    }
 }
 
 int main(){
     int duration, intersections_count, streets_count, cars_count, bonus;
     // duration <= 10^4 intersections <= 10^5 cars <= 10^3
-    char file_name[] = "d.txt";
+    char file_name[] = "b.txt";
     map<string, Street> street_table;
     fin.open(file_name);
     fin >> duration >> intersections_count >> streets_count >> cars_count >> bonus;
@@ -191,13 +239,6 @@ int main(){
         Intersects[st.from].out.push_back(st);
         Intersects[st.dist].in.push_back(st);
     }
-    /*for(int i = 0; i < Intersects.size(); ++i){
-        cout << "intersect  "<< i<<"  : ";
-        for(int j = 0; j < Intersects[i].out.size(); ++j){
-            cout << Intersects[i].out[j].dist<<"("<< Intersects[i].out[j].length << ")   ";
-        }
-        cout << endl;
-    }*/
     cout <<"street input complete" << endl;
     vector<Car> cars;
     for(int i = 0; i < cars_count; ++i){
@@ -218,8 +259,15 @@ int main(){
     //show_schedule(s);
     //s = mutate(s, 2);
     //show_schedule(s);
-    for (int i = 0; i < 20; ++ i) {
-        cout << i << " " << simulate(duration, Intersects, street_table, cars, s, bonus) << endl;
+    int population_size = 10, steps = 10;
+    vector<Schedule> population;
+    population.push_back(s);
+    for(int i = 0; i < population_size; ++i){
+        population.push_back(mutate(s, 1 + i / 5));
+    }
+    for(int iter = 0; iter < steps; iter ++){
+        cout << "Iteration " << iter + 1 << endl;
+        genetic_algo(population, duration, Intersects, street_table, cars, bonus, 30);
     }
     return 0;
 }

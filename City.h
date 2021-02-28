@@ -10,6 +10,8 @@ using Intersection = int;
 struct Jam;
 struct City;
 
+using Scheduler = std::vector<std::vector<std::pair<Jam*, int>>>;
+
 struct Street {
     Intersection b;
     Intersection e;
@@ -38,10 +40,15 @@ struct Jam {
         inline void clear();
         inline Car* front() const;
     };
+    struct Statistics {
+        int used = 0;
+        int stuck = 0;
+    };
     int lenght;
     int green_shift = 0, green_time = 0, all_time = 1;
     int last_update = -1;
     Street* street = nullptr;
+    Statistics statistics;
     UnsafeCarQueue cars;
     inline bool IsGreen(int);
 };
@@ -53,7 +60,7 @@ struct City {
     std::vector<std::vector<Jam*>> lights;
     std::vector<Jam> jams;
     std::vector<Car> cars;
-    std::vector<std::vector<std::pair<Jam*, int>>> scheduler;
+    Scheduler scheduler;
 
     void LoadCity(std::istream&);
     void LoadScheduler(std::istream&);
@@ -61,6 +68,7 @@ struct City {
     void ParseScheduler(std::ifstream&);
 
     void ApplyScheduler();
+    void ApplyScheduler(const Scheduler&);
     void Reset();
     void NextTurn();
     bool CheckCars();

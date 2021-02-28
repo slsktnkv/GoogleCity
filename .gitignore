@@ -1,2 +1,4 @@
 build*
 *.user
+working/callgrind*
+working/vgcore*

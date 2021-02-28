@@ -42,19 +42,23 @@ void City::LoadScheduler(std::istream& in) {
     }
 }
 
-void City::ApplyScheduler() {
+void City::ApplyScheduler(const Scheduler& sch)
+{
     for (auto& j : jams) {
         j.all_time = 1;
         j.green_shift = 0;
         j.green_time = 0;
     }
-    for (const auto& s : scheduler) {
+    for (const auto& l : sch) {
         int all = 0;
-        for (const auto& si : s) {
+        for (const auto& si : l) {
             all += si.second;
         }
         int shift = 0;
-        for (const auto& si : s) {
+        if (!all) {
+            continue;
+        }
+        for (const auto& si : l) {
             si.first->green_shift = all - shift;
             si.first->all_time = all;
             si.first->green_time = si.second;
@@ -63,12 +67,19 @@ void City::ApplyScheduler() {
     }
 }
 
+void City::ApplyScheduler()
+{
+    ApplyScheduler(scheduler);
+}
+
 void City::Reset() {
     T = 0;
     score = 0;
     for (auto& j : jams) {
         j.cars.clear();
         j.last_update = -1;
+        j.statistics.used = 0;
+        j.statistics.stuck = 0;
     }
     for (auto& c : cars) {
         c.remainder = 0;
@@ -89,9 +100,10 @@ void City::NextTurn() {
                 // move car from this jam
                 cur_jam->last_update = T;
                 cur_jam->cars.pop();
-                ++c.i_jam;
+                c.i_jam++;
                 if (c.i_jam + 1 < c.path.size()) {
                     // put car to next jam
+                    c.path[c.i_jam]->statistics.used++;
                     Jam* next = c.path[c.i_jam];
                     c.remainder = next->lenght;
                     next->cars.push(&c);
@@ -103,6 +115,7 @@ void City::NextTurn() {
                 }
             } else {
                 // is stuck in jam
+                c.path[c.i_jam]->statistics.stuck++;
             }
         }
     }
