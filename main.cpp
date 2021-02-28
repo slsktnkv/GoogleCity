@@ -24,8 +24,8 @@ int main(int argc, char** argv)
     if (!city.CheckCars()) {
         std::cout << "PROBLEM WITH CARS" << std::endl;
     }
-    city.ApplyScheduler();
     for (int i = 0; i < 40; ++ i) {
+        city.ApplyScheduler();
         city.Reset();
         while (city.T < city.D) {
             city.NextTurn();
