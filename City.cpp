@@ -64,13 +64,14 @@ void City::Reset() {
     T = 0;
     score = 0;
     for (auto& j : jams) {
-        j.cars.clear();
+        delete j.cars;
+        j.cars = new std::deque<Car*>;
         j.last_update = -1;
     }
     for (auto& c : cars) {
         c.remainder = 0;
         c.i_jam = 0;
-        c.path.front()->cars.push_back(&c);
+        c.path.front()->cars->push_back(&c);
     }
 }
 
@@ -81,17 +82,17 @@ void City::NextTurn() {
         } else {
             if (Jam* cur_jam = c.path[c.i_jam];
                 cur_jam->last_update < T && // only one car per turn
-                cur_jam->cars.front() == &c &&// this car is first
+                cur_jam->cars->front() == &c &&// this car is first
                 cur_jam->IsGreen(T)) {
                 // move car from this jam
                 cur_jam->last_update = T;
-                cur_jam->cars.pop_front();
+                cur_jam->cars->pop_front();
                 ++c.i_jam;
                 if (c.i_jam + 1 < c.path.size()) {
                     // put car to next jam
                     Jam* next = c.path[c.i_jam];
                     c.remainder = next->lenght;
-                    next->cars.push_back(&c);
+                    next->cars->push_back(&c);
                 } else {
                     // finish
                     if (c.path.back()->lenght <= D - T) {

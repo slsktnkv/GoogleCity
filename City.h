@@ -29,7 +29,7 @@ struct Jam {
     int green_shift = 0, green_time = 0, all_time = 1;
     int last_update = -1;
     Street* street = nullptr;
-    std::deque<Car*> cars;
+    std::deque<Car*>* cars = nullptr;
     inline bool IsGreen(int);
 };
 
