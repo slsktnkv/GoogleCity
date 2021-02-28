@@ -2,6 +2,7 @@
 #include <fstream>
 
 #include "City.h"
+#include "CityUtils.h"
 
 int main(int argc, char** argv)
 {
@@ -24,13 +25,16 @@ int main(int argc, char** argv)
     if (!city.CheckCars()) {
         std::cout << "PROBLEM WITH CARS" << std::endl;
     }
-    for (int i = 0; i < 40; ++ i) {
-        city.ApplyScheduler();
-        city.Reset();
-        while (city.T < city.D) {
-            city.NextTurn();
-        }
-        std::cout << i << " " << city.score << std::endl;
+    std::cout << "Solution\tScore" << std::endl;
+    std::cout << "initial\t" << CityUtils::Simulate(city) << std::endl;
+    CityUtils::SetEmptyScheduler(city);
+    std::cout << "empty\t" << CityUtils::Simulate(city) << std::endl;
+    CityUtils::SetUniformScheduler(city);
+    std::cout << "uniform\t" << CityUtils::Simulate(city) << std::endl;
+    for (int i = 0; i < 20; ++ i) {
+        int d = rand() % 1000, m = rand() % 7 + 1;
+        CityUtils::SetRandomScheduler(city, i, d, m);
+        std::cout << "s " << i << " d " << d << " m " << m << "\t" << CityUtils::Simulate(city) << std::endl;
     }
     return 0;
 }

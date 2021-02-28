@@ -6,6 +6,7 @@ void City::LoadCity(std::istream& in) {
     jams.resize(S);
     cars.resize(V);
     scheduler.resize(I);
+    lights.resize(I);
     for (int i = 0; i < S; ++i) {
         int b, e, l;
         std::string name;
@@ -13,6 +14,7 @@ void City::LoadCity(std::istream& in) {
         jams[i].street = streets[{b, e}] = &(street_names[name] = {b, e, l, &jams[i], name});
         jams[i].lenght = l;
         jams[i].cars.init(V);
+        lights[e].push_back(&jams[i]);
     }
     for (int i = 0; i < V; ++i) {
         int p;

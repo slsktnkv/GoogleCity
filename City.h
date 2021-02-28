@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <functional>
 
 using Intersection = int;
 struct Jam;
@@ -49,12 +50,16 @@ struct City {
     int D, I, S, V, F, score, T;
     std::map<std::string, Street> street_names;
     std::map<std::pair<Intersection, Intersection>, Street*> streets;
+    std::vector<std::vector<Jam*>> lights;
     std::vector<Jam> jams;
     std::vector<Car> cars;
     std::vector<std::vector<std::pair<Jam*, int>>> scheduler;
 
     void LoadCity(std::istream&);
     void LoadScheduler(std::istream&);
+    void SerializeScheduler(std::ostream&);
+    void ParseScheduler(std::ifstream&);
+
     void ApplyScheduler();
     void Reset();
     void NextTurn();
