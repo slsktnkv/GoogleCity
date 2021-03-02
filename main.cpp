@@ -2,19 +2,23 @@
 #include <fstream>
 
 #include "City.h"
-#include "CityUtils.h"
+#include "Simulation.h"
+#include "Genetics.h"
 
 int main(int argc, char** argv)
 {
     std::string data, solution;
     int times;
-    if (argc == 4) {
+    size_t size;
+    if (argc == 5) {
         data = argv[1];
         solution = argv[2];
-        times = atoi(argv[3]);
+        size = atoi(argv[3]);
+        times = atoi(argv[4]);
     } else {
         data = "a.txt";
         solution = "answer_a.txt";
+        size = 8;
         times = 20;
     }
     City city;
@@ -22,39 +26,46 @@ int main(int argc, char** argv)
     in.open(data);
     city.LoadCity(in);
     in.close();
+    if (!city.CheckRouts()) {
+        std::cout << "PROBLEM WITH CARS' ROUTES!" << std::endl;
+    }
+/*
+    std::vector<Simulation> sims;
+    sims.emplace_back(city);
     sch.open(solution);
-    city.LoadScheduler(sch);
+    sims.front().LoadScheduler(sch);
     sch.close();
-    if (!city.CheckCars()) {
-        std::cout << "PROBLEM WITH CARS" << std::endl;
+    for (int i = 0; i < times; ++i) {
+        sims.emplace_back(city);
+        sims.back().SetScheduler(sims.front().Scheduler());
+        sims.back().Run();
+        std::cout << i << "\t" << sims.back().Score() << std::endl;
     }
-    std::cout << "Solution\tScore" << std::endl;
-    std::cout << "initial\t" << CityUtils::Simulate(city, city.scheduler) << std::endl;
-    CityUtils::SetEmptyScheduler(city);
-    std::cout << "empty\t" << CityUtils::Simulate(city, city.scheduler) << std::endl;
-    CityUtils::SetUniformScheduler(city);
-    std::cout << "uniform\t" << CityUtils::Simulate(city, city.scheduler) << std::endl;
-    /*
-    for (int i = 0; i < 20; ++ i) {
-        int d = rand() % 1000, m = rand() % 7 + 1;
-        CityUtils::SetRandomScheduler(city, i, d, m);
-        std::cout << "s " << i << " d " << d << " m " << m << "\t" << CityUtils::Simulate(city, city.scheduler) << std::endl;
+*/
+    {
+        Simulation sim(city);
+        sch.open(solution);
+        sim.LoadScheduler(sch);
+        sch.close();
+        sim.RunUniformScheduler();
+        std::cout << "Uniform:\t" << sim.Score() << std::endl;
     }
-    */
-    Genetics::Population world(city, 10, 0);
+    size_t elite_size = 16;
+    Genetics::Population world(city, elite_size, 0);
     int time = 0;
     std::cout << "Generation: " << time;
-    for (const auto& c : world.GetPopulation()) {
-        std::cout << "\t" << c.second;
+    for (const auto& c : world.GetTop(elite_size * 4)) {
+        std::cout << "\t" << c->Score();
     }
     std::cout << std::endl;
     for (++time; time < times; time++) {
         world.NextGeneration();
         std::cout << "Generation: " << time;
-        for (const auto& c : world.GetPopulation()) {
-            std::cout << "\t" << c.second;
+        for (const auto& c : world.GetTop(elite_size * 4)) {
+            std::cout << "\t" << c->Score();
         }
         std::cout << std::endl;
     }
+
     return 0;
 }
