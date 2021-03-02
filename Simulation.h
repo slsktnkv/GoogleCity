@@ -5,6 +5,8 @@
 
 #include "City.h"
 
+// #define CAR_QUEUE_ON_STACK
+
 class Simulation
 {
     struct Car;
@@ -22,13 +24,20 @@ public:
         class UnsafeCarQueue
         {
         private:
-            static const size_t RESIZE_FACTOR = 2;
-            std::vector<Car*> queue;
             size_t head;
+        #ifdef CAR_QUEUE_ON_STACK
+            static const size_t UNSAFE_CAR_QUEUE_SIZE = 64;
+            Car* queue[UNSAFE_CAR_QUEUE_SIZE];
             size_t tail;
         public:
+        #else // CAR_QUEUE_ON_STACK
+            static const size_t RESIZE_FACTOR = 2;
+            std::vector<Car*> queue;
+            size_t size;
+        public:
             static size_t max_size;
-            inline void init(size_t);
+            inline void reserve(size_t);
+        #endif //CAR_QUEUE_ON_STACK
             inline void push(Car*);
             inline void pop();
             inline void clear();

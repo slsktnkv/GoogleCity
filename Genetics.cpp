@@ -65,14 +65,16 @@ void Genetics::Population::SortCreatures()
 
 void Genetics::Population::NextGeneration()
 {
+    size_t mutate = creatures.size() / 2;
     #pragma omp parallel for
-    for (size_t i = 0; i < size; ++i) {
-        Mutate(*creatures[i + size], *creatures[i], i + 5);
-        creatures[i + size]->Run();
+    for (size_t i = 0; i < mutate; ++i) {
+        Mutate(*creatures[i + mutate], *creatures[i], i + 5);
+        creatures[i + mutate]->Run();
     }
+    SortCreatures();
     #pragma omp parallel for
-    for (size_t i = 2 * size; i < size * size; ++i) {
-        Copulate(*creatures[i], *creatures[gd(rnd) % (size * 2)], *creatures[gd(rnd) % (size * 2)]);
+    for (size_t i = size; i < creatures.size(); ++i) {
+        Copulate(*creatures[i], *creatures[gd(rnd) % creatures.size()], *creatures[rnd() % creatures.size()]);
         creatures[i]->Run();
     }
     SortCreatures();

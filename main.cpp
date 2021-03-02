@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <omp.h>
+
 #include "City.h"
 #include "Simulation.h"
 #include "Genetics.h"
@@ -35,37 +37,34 @@ int main(int argc, char** argv)
     sch.open(solution);
     sims.front().LoadScheduler(sch);
     sch.close();
-    for (int i = 0; i < times; ++i) {
+    sims.front().Run();
+    std::cout << "Initial:\t" << sims.front().Score() << std::endl;
+    for (int i = 1; i < times; ++i) {
         sims.emplace_back(city);
-        sims.back().SetScheduler(sims.front().Scheduler());
-        sims.back().Run();
-        std::cout << i << "\t" << sims.back().Score() << std::endl;
+        std::cout << "Constructed:" << "\t" << i << std::endl;
+    }
+    #pragma omp parallel for
+    for (int i = 1; i < times; ++i) {
+        sims[i].SetScheduler(sims.front().Scheduler());
+        sims[i].Run();
+        std::cout << i << "\t" << sims[i].Score() << std::endl;
     }
 */
-    {
-        Simulation sim(city);
-        sch.open(solution);
-        sim.LoadScheduler(sch);
-        sch.close();
-        sim.RunUniformScheduler();
-        std::cout << "Uniform:\t" << sim.Score() << std::endl;
-    }
-    size_t elite_size = 16;
+    size_t elite_size = size;
     Genetics::Population world(city, elite_size, 0);
     int time = 0;
     std::cout << "Generation: " << time;
-    for (const auto& c : world.GetTop(elite_size * 4)) {
+    for (const auto& c : world.GetTop(elite_size * 2)) {
         std::cout << "\t" << c->Score();
     }
     std::cout << std::endl;
     for (++time; time < times; time++) {
         world.NextGeneration();
         std::cout << "Generation: " << time;
-        for (const auto& c : world.GetTop(elite_size * 4)) {
+        for (const auto& c : world.GetTop(elite_size * 2)) {
             std::cout << "\t" << c->Score();
         }
         std::cout << std::endl;
     }
-
     return 0;
 }

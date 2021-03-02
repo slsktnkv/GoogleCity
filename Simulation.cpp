@@ -1,7 +1,11 @@
 #include "Simulation.h"
 
 //#include <iostream>
+#ifdef CAR_QUEUE_ON_STACK
+#else // CAR_QUEUE_ON_STACK
 size_t Simulation::Jam::UnsafeCarQueue::max_size = 0;
+#endif //CAR_QUEUE_ON_STACK
+
 
 Simulation::Simulation(const City& city) :
     city(city),
@@ -14,7 +18,10 @@ Simulation::Simulation(const City& city) :
         jams[j].begin = street.second.b;
         jams[j].end = street.second.e;
         jams[j].lenght = street.second.l;
-        jams[j].cars.init(V);
+    #ifdef CAR_QUEUE_ON_STACK
+    #else // CAR_QUEUE_ON_STACK
+        jams[j].cars.reserve(1);
+    #endif //CAR_QUEUE_ON_STACK
         lights[jams[j].end].push_back(&jams[j]);
         ++j;
     }
@@ -194,25 +201,58 @@ void Simulation::RunUniformScheduler()
     }
     Run();
 }
+#ifdef CAR_QUEUE_ON_STACK
+#else // CAR_QUEUE_ON_STACK
+void Simulation::Jam::UnsafeCarQueue::reserve(size_t reserve)
+{
+    queue.resize(reserve);
+    head = size = 0;
+}
+#endif //CAR_QUEUE_ON_STACK
 
-void Simulation::Jam::UnsafeCarQueue::init(size_t size) {
-    queue.resize(size);
+void Simulation::Jam::UnsafeCarQueue::push(Car* car)
+{
+    #ifdef CAR_QUEUE_ON_STACK
+    queue[tail] = car;
+    tail = (tail + 1) % UNSAFE_CAR_QUEUE_SIZE;
+    #else // CAR_QUEUE_ON_STACK
+    if (size < queue.size()) {
+        queue[(head + size) % queue.size()] = car;
+        size++;
+    } else {
+        // size = queue.size()
+        std::vector<Car*> new_queue(size * RESIZE_FACTOR);
+        std::move(queue.begin() + head, queue.end(), new_queue.begin());
+        std::move(queue.begin(), queue.begin() + head, new_queue.begin() + size - head);
+        std::swap(new_queue, queue);
+        queue[size] = car;
+        head = 0;
+        size++;
+    }
+    max_size = max_size > size ? max_size : size;
+    #endif //CAR_QUEUE_ON_STACK
+}
+
+void Simulation::Jam::UnsafeCarQueue::pop()
+{
+    #ifdef CAR_QUEUE_ON_STACK
+    head = (head + 1) % UNSAFE_CAR_QUEUE_SIZE;
+    #else // CAR_QUEUE_ON_STACK
+    head = (head + 1) % queue.size();
+    size--;
+    #endif //CAR_QUEUE_ON_STACK
+}
+
+void Simulation::Jam::UnsafeCarQueue::clear()
+{
+    #ifdef CAR_QUEUE_ON_STACK
     head = tail = 0;
+    #else // CAR_QUEUE_ON_STACK
+    head = size = 0;
+    #endif //CAR_QUEUE_ON_STACK
 }
 
-void Simulation::Jam::UnsafeCarQueue::push(Car* car) {
-    queue[tail++] = car;
-    //max_size = max_size > (queue.size() + tail - head) % queue.size() ? max_size : (queue.size() + tail - head) % queue.size();
-}
-
-void Simulation::Jam::UnsafeCarQueue::pop() {
-    ++head;
-}
-
-void Simulation::Jam::UnsafeCarQueue::clear() {
-    head = tail = 0;
-}
-
-Simulation::Car* Simulation::Jam::UnsafeCarQueue::front() const {
+Simulation::Car* Simulation::Jam::UnsafeCarQueue::front() const
+{
     return queue[head];
 }
