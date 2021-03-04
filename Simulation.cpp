@@ -144,10 +144,10 @@ void Simulation::NextTurn() {
                 // move car from this jam
                 cur_jam->last_update = T;
                 cur_jam->cars.pop();
+                cur_jam->statistics.used++;
                 c.i_jam++;
                 if (c.i_jam + 1 < c.path.size()) {
                     // put car to next jam
-                    c.path[c.i_jam]->statistics.used++;
                     Jam* next = c.path[c.i_jam];
                     c.remainder = next->lenght;
                     next->cars.push(&c);
@@ -159,7 +159,7 @@ void Simulation::NextTurn() {
                 }
             } else {
                 // is stuck in jam
-                c.path[c.i_jam]->statistics.stuck++;
+                cur_jam->statistics.stuck++;
             }
         }
     }
