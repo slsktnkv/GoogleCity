@@ -21,7 +21,7 @@ public:
         const Statistics& Statistics() const {return statistics;}
         const City::Street* Street() const {return street;}
         int GreenTime() const {return green_time;}
-    //private:
+    private:
         class UnsafeCarQueue
         {
         private:
