@@ -6,6 +6,7 @@
 #include "City.h"
 #include "Simulation.h"
 #include "Genetics.h"
+#include "DummyOptimization.h"
 
 int main(int argc, char** argv)
 {
@@ -31,7 +32,8 @@ int main(int argc, char** argv)
     if (!city.CheckRouts()) {
         std::cout << "PROBLEM WITH CARS' ROUTES!" << std::endl;
     }
-/*
+
+    /*
     std::vector<Simulation> sims;
     sims.emplace_back(city);
     sch.open(solution);
@@ -49,7 +51,8 @@ int main(int argc, char** argv)
         sims[i].Run();
         std::cout << i << "\t" << sims[i].Score() << std::endl;
     }
-*/
+    */
+    /*
     size_t elite_size = size;
     Genetics::Population world(city, elite_size, 0);
     int time = 0;
@@ -66,5 +69,43 @@ int main(int argc, char** argv)
         }
         std::cout << std::endl;
     }
+    */
+    Simulation sim(city);
+    sch.open(solution);
+    sim.LoadScheduler(sch);
+    sch.close();
+    sim.Run();
+    std::cout << "initial:\t" << sim.Score() << std::endl;
+    /*
+    std::cout << "unused:\t" << ReduceUnsed(sim);
+    sim.Run();
+    std::cout << "\tscore:\t" << sim.Score() << std::endl;
+    std::cout << "unused:\t" << ReduceUnsed(sim);
+    sim.Run();
+    std::cout << "\tscore:\t" << sim.Score() << std::endl;
+
+    sim.RunUniformScheduler();
+    std::cout << "uniform:\t" << sim.Score() << std::endl;
+    std::cout << "unused:\t" << ReduceUnsed(sim);
+    sim.Run();
+    std::cout << "\tscore:\t" << sim.Score() << std::endl;
+
+    sim.RunEmptyScheduler();
+    std::cout << "empty:\t" << sim.Score() << std::endl;
+    std::cout << "unused:\t" << ReduceUnsed(sim);
+    sim.Run();
+    std::cout << "\tscore:\t" << sim.Score() << std::endl;
+    */
+
+    std::cout << std::endl;
+    for (int s = 0; s < times; ++s) {
+        std::cout << "unused:\t" << ReduceUnsed(sim);
+        sim.Run();
+        std::cout << "\tscore:\t" << sim.Score() << std::endl;
+        std::cout << "increase:\t" << IncreaseStucked(sim);
+        sim.Run();
+        std::cout << "\tscore:\t" << sim.Score() << std::endl;
+    }
+
     return 0;
 }

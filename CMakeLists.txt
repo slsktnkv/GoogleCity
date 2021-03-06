@@ -19,6 +19,7 @@ add_executable(GoogleCity main.cpp
     City.h City.cpp
     Simulation.h Simulation.cpp
     Genetics.h Genetics.cpp
+    DummyOptimization.h DummyOptimization.cpp
     )
 
 add_executable(GoogleCityAndrew GoogleCityAndrew.cpp)

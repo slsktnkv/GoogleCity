@@ -11,7 +11,7 @@ Genetics::Population::Population(const City& city, size_t size, int seed)
     }
     #pragma omp parallel for
     for (size_t c = 0; c < size; ++c) {
-        creatures[c]->RunUniformScheduler();
+        creatures[c]->RunRandomScheduler(rnd, 5, 5);
     }
     #pragma omp parallel for
     for (size_t c = size; c < size * size; ++c) {
