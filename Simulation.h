@@ -21,7 +21,7 @@ public:
         const Statistics& Statistics() const {return statistics;}
         const City::Street* Street() const {return street;}
         int GreenTime() const {return green_time;}
-    private:
+    //private:
         class UnsafeCarQueue
         {
         private:
@@ -68,6 +68,7 @@ public:
     void ParseScheduler(std::ifstream&);
     bool CheckScheduler(const Scheduler_t&) const;
     const Scheduler_t& Scheduler() const {return scheduler;}
+    Scheduler_t& UnsafeScheduler() {return scheduler;}
 
     void ClearScheduler();
     void SetScheduler(const Scheduler_t& scheduler);

@@ -20,7 +20,7 @@ Simulation::Simulation(const City& city) :
         jams[j].lenght = street.second.l;
     #ifdef CAR_QUEUE_ON_STACK
     #else // CAR_QUEUE_ON_STACK
-        jams[j].cars.reserve(1);
+        jams[j].cars.reserve(4);
     #endif //CAR_QUEUE_ON_STACK
         lights[jams[j].end].push_back(&jams[j]);
         ++j;
@@ -124,6 +124,7 @@ void Simulation::Reset() {
         j.last_update = -1;
         j.statistics.used = 0;
         j.statistics.stuck = 0;
+        j.cars.clear();
     }
     for (auto& c : cars) {
         c.remainder = 0;

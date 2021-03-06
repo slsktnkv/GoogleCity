@@ -76,10 +76,28 @@ int main(int argc, char** argv)
     sch.close();
     sim.Run();
     std::cout << "initial:\t" << sim.Score() << std::endl;
+    /*
     std::cout << "unused:\t" << ReduceUnsed(sim);
     sim.Run();
     std::cout << "\tscore:\t" << sim.Score() << std::endl;
-    /*
+    std::cout << "unused:\t" << ReduceUnsed(sim);
+    sim.Run();
+    std::cout << "\tscore:\t" << sim.Score() << std::endl;
+
+    sim.RunUniformScheduler();
+    std::cout << "uniform:\t" << sim.Score() << std::endl;
+    std::cout << "unused:\t" << ReduceUnsed(sim);
+    sim.Run();
+    std::cout << "\tscore:\t" << sim.Score() << std::endl;
+
+    sim.RunEmptyScheduler();
+    std::cout << "empty:\t" << sim.Score() << std::endl;
+    std::cout << "unused:\t" << ReduceUnsed(sim);
+    sim.Run();
+    std::cout << "\tscore:\t" << sim.Score() << std::endl;
+    */
+
+    std::cout << std::endl;
     for (int s = 0; s < times; ++s) {
         std::cout << "unused:\t" << ReduceUnsed(sim);
         sim.Run();
@@ -88,7 +106,6 @@ int main(int argc, char** argv)
         sim.Run();
         std::cout << "\tscore:\t" << sim.Score() << std::endl;
     }
-    */
 
     return 0;
 }

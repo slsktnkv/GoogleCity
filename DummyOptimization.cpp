@@ -4,18 +4,20 @@
 int ReduceUnsed(Simulation& sim)
 {
     int counter = 0;
-    Simulation::Scheduler_t sch = sim.Scheduler();
+    Simulation::Scheduler_t sch = sim.UnsafeScheduler();
     for (auto& i : sch) {
-        for (auto& l : i) {
-            if (l.first->Statistics().used == 0 && l.first->Statistics().stuck == 0) {
-                if (l.second > 0) {
-                    l.second = 0;
+        if (i.size() <= 1) {
+            continue;
+        }
+        for (size_t l = 1; l < i.size(); ++l) {
+            if (i[l].first->Statistics().stuck == 0 && i[l].first->Statistics().used == 0) {
+                i[l].second = 0;
+                if (i[l].second > 0) {
                     counter++;
                 }
             }
         }
     }
-    sim.SetScheduler(sch);
     return counter;
 }
 
